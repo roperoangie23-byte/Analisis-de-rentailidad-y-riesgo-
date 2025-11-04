@@ -76,15 +76,21 @@ if st.button("Analizar Empresa"):
     else:
         st.success(f"✅ Datos descargados exitosamente para **{ticker}**")
 
-        # --- Cálculos ---
-        # Si los datos vienen con varios tickers, tomamos solo la parte de 'Adj Close'
+        # --- Asegurar que solo quede una columna de 'Adj Close' ---
         if isinstance(data.columns, pd.MultiIndex):
-            data = data["Adj Close"]
+            if 'Adj Close' in data.columns.get_level_values(0):
+                data = data['Adj Close']
+            else:
+                data = data.xs('Adj Close', axis=1, level=1, drop_level=False)
+        elif "Adj Close" in data.columns:
+            data = data[["Adj Close"]]  # mantener formato DataFrame
+        else:
+            st.error("❌ No se encontró la columna 'Adj Close' en los datos descargados.")
+            st.stop()
 
-        # Calculamos los rendimientos diarios
+        # --- Calcular rendimientos diarios ---
         data["Daily Return"] = data["Adj Close"].pct_change()
 
-        # Rentabilidad promedio, riesgo y Sharpe Ratio
         avg_return = data["Daily Return"].mean()
         std_dev = data["Daily Return"].std()
         sharpe_ratio = avg_return / std_dev if std_dev != 0 else 0
@@ -230,6 +236,7 @@ st.markdown("""
 Desarrollado por **Angie, Dayana y Jhony**, estudiantes de Análisis de costos y presupuestos.  
 Hecho con Python usando **Streamlit** | Datos: *Yahoo Finance API*  
 """)
+
 
 
 
