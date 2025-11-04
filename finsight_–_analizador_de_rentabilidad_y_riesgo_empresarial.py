@@ -76,51 +76,18 @@ if st.button("Analizar Empresa"):
     else:
         st.success(f"✅ Datos descargados exitosamente para **{ticker}**")
 
-        # --- Asegurar que solo quede una columna de 'Adj Close' ---
-          # --- Asegurar que solo quede la columna 'Adj Close' ---
-        if isinstance(data.columns, pd.MultiIndex):
-            # Caso: descarga múltiple o estructura jerárquica
-            if 'Adj Close' in data.columns.get_level_values(1):
-                data = data.xs('Adj Close', axis=1, level=1)
-            elif 'Adj Close' in data.columns.get_level_values(0):
-                data = data.xs('Adj Close', axis=1, level=0)
-            else:
-                st.error("❌ No se encontró la columna 'Adj Close' en los datos descargados.")
-                st.stop()
-        else:
-            # Caso: descarga de un solo ticker (sin MultiIndex)
-            if 'Adj Close' in data.columns:
-                data = data[['Adj Close']]
-            else:
-                st.error("❌ No se encontró la columna 'Adj Close' en los datos descargados.")
-                st.stop()
-        
-
-        # --- Cálculo de rendimientos diarios ---
-        if 'Adj Close' in data.columns:
-            precios = data['Adj Close']
-        elif isinstance(data.columns, pd.MultiIndex) and ('Adj Close' in data.columns.get_level_values(1)):
-            precios = data.xs('Adj Close', axis=1, level=1)
-        else:
-            st.error("No se encontró la columna 'Adj Close' en los datos descargados.")
-            st.stop()
-
-        data = precios.to_frame(name="Adj Close")
+        # --- Cálculos ---
         data["Daily Return"] = data["Adj Close"].pct_change()
-
-        # --- Calcular métricas ---
         avg_return = data["Daily Return"].mean()
-        volatility = data["Daily Return"].std()
-        sharpe_ratio = avg_return / volatility if volatility != 0 else 0
+        std_dev = data["Daily Return"].std()
+        sharpe_ratio = avg_return / std_dev if std_dev != 0 else 0
 
+        # --- Tabla de métricas ---
         metrics_df = pd.DataFrame({
-            "Rendimiento Promedio Diario": [avg_return],
-            "Volatilidad Diaria": [volatility],
-            "Ratio Sharpe": [sharpe_ratio]
+            'Indicador': ['Rentabilidad promedio (%)', 'Riesgo (Desviación estándar %)', 'Sharpe Ratio'],
+            'Valor': [avg_return * 100, std_dev * 100, sharpe_ratio]
         })
-
-        st.subheader("📊 Métricas de Rentabilidad y Riesgo")
-        st.dataframe(metrics_df.style.format("{:.2%}"))
+        st.table(metrics_df)
 
         # --- Gráfico de precios ---
         st.subheader("Evolución del precio ajustado")
@@ -256,6 +223,7 @@ st.markdown("""
 Desarrollado por **Angie, Dayana y Jhony**, estudiantes de Análisis de costos y presupuestos.  
 Hecho con Python usando **Streamlit** | Datos: *Yahoo Finance API*  
 """)
+
 
 
 
