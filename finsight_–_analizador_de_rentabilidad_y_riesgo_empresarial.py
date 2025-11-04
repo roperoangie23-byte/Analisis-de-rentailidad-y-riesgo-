@@ -78,12 +78,16 @@ if st.button("Analizar Empresa"):
 
         # --- Cálculos ---
         # Si los datos vienen con varios tickers, tomamos solo la parte de 'Adj Close'
-if isinstance(data.columns, pd.MultiIndex):
-    data = data["Adj Close"]
+        if isinstance(data.columns, pd.MultiIndex):
+            data = data["Adj Close"]
 
-# Calculamos los rendimientos diarios
-data["Daily Return"] = data.pct_change()
+        # Calculamos los rendimientos diarios
+        data["Daily Return"] = data["Adj Close"].pct_change()
 
+        # Rentabilidad promedio, riesgo y Sharpe Ratio
+        avg_return = data["Daily Return"].mean()
+        std_dev = data["Daily Return"].std()
+        sharpe_ratio = avg_return / std_dev if std_dev != 0 else 0
 
         # --- Tabla de métricas ---
         metrics_df = pd.DataFrame({
@@ -226,6 +230,7 @@ st.markdown("""
 Desarrollado por **Angie, Dayana y Jhony**, estudiantes de Análisis de costos y presupuestos.  
 Hecho con Python usando **Streamlit** | Datos: *Yahoo Finance API*  
 """)
+
 
 
 
