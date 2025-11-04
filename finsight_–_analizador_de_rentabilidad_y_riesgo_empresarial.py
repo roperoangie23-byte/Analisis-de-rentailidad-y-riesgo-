@@ -11,50 +11,34 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-st.set_page_config(page_title="FinSight", layout="wide")
+# ⚙️ Configuración de página
+st.set_page_config(page_title="FinSight", page_icon="💼", layout="wide")
 
 # 🎯 Encabezado principal
 st.title("💼 FinSight – Analizador de Rentabilidad y Riesgo Empresarial")
-st.write("Explora el desempeño financiero de distintas empresas a través de indicadores de rentabilidad y riesgo.")
+st.markdown("Explora el desempeño financiero de distintas empresas a través de indicadores de **rentabilidad** y **riesgo**.")
+st.divider()
 
 # 🔍 Entrada del usuario
-ticker = st.text_input("Ingresa el ticker de la empresa (por ejemplo: AAPL, MSFT, NVDA):", "AAPL")
-start_date = st.date_input("Fecha inicial:", pd.to_datetime("2020-01-01"))
-end_date = st.date_input("Fecha final:", pd.to_datetime("2024-12-31"))
+ticker = st.text_input("📊 Ingresa el ticker de la empresa (por ejemplo: AAPL, MSFT, NVDA):", "AAPL")
+col1, col2 = st.columns(2)
+with col1:
+    start_date = st.date_input("📅 Fecha inicial:", pd.to_datetime("2020-01-01"))
+with col2:
+    end_date = st.date_input("📅 Fecha final:", pd.to_datetime("2024-12-31"))
 
-# 📈 Descargar datos
+# 🚀 Botón de análisis
 if st.button("Analizar"):
-    data = yf.download(ticker, start=start_date, end=end_date)
+    with st.spinner("Descargando datos financieros..."):
+        data = yf.download(ticker, start=start_date, end=end_date, progress=False)
 
+    # Verificación de datos
     if data.empty:
-        st.error("No se encontraron datos para el ticker especificado.")
-    else:
-        st.success(f"Datos descargados exitosamente para **{ticker}**")
+        st.error("❌ No se encontraron datos para el ticker especificado. Verifica que sea válido.")
+        st.stop()
 
-        # 🧮 Cálculos
-        data["Daily Return"] = data["Adj Close"].pct_change()
-        avg_return = data["Daily Return"].mean()
-        std_dev = data["Daily Return"].std()
-        sharpe_ratio = avg_return / std_dev if std_dev != 0 else 0
+    st.success(f"✅ Datos descargados exitosamente para **{ticker}**")
 
-        # 📊 Mostrar métricas
-        metrics_df = pd.DataFrame({
-            'Indicador': ['Rentabilidad promedio (%)', 'Riesgo (Desviación estándar %)', 'Sharpe Ratio'],
-            'Valor': [avg_return * 100, std_dev * 100, sharpe_ratio]
-        })
-        st.table(metrics_df)
-
-        # 📈 Gráfico de precios ajustados
-        st.subheader("Evolución del precio ajustado")
-        fig, ax = plt.subplots()
-        ax.plot(data["Adj Close"], color='blue')
-        ax.set_title(f"Precio ajustado de {ticker}")
-        ax.set_xlabel("Fecha")
-        ax.set_ylabel("Precio ($)")
-        st.pyplot(fig)
-
-        # 📉 Histograma de rendimientos diarios
-        st.subheader("Distribución de los rendimientos diarios")
-        fig2, ax2 = plt.subplots()
-        sns.histplot(data["Daily Return"].dropna(), bins=30, kde=True, ax=ax2)
-        st.pyplot(fig2)
+    # 🧮 Asegurar que las columnas sean planas (a veces vienen en MultiIndex)
+    if isinstance(data.columns, pd.MultiIndex):
+        data.columns = data.columns.get_level_values(0)
