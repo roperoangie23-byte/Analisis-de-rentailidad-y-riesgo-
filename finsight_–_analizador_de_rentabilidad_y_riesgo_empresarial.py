@@ -77,20 +77,24 @@ if st.button("Analizar Empresa"):
         st.success(f"✅ Datos descargados exitosamente para **{ticker}**")
 
         # --- Asegurar que solo quede una columna de 'Adj Close' ---
+          # --- Asegurar que solo quede la columna 'Adj Close' ---
         if isinstance(data.columns, pd.MultiIndex):
+            # Caso: descarga múltiple o estructura jerárquica
             if 'Adj Close' in data.columns.get_level_values(1):
                 data = data.xs('Adj Close', axis=1, level=1)
-        elif 'Adj Close' in data.columns.get_level_values(0):
-            data = data.xs('Adj Close', axis=1, level=0)
-        else:
-            st.error("❌ No se encontró la columna 'Adj Close' en los datos descargados.")
-            st.stop()
-        else:
-            if 'Adj Close' in data.columns:
-                data=data[['Adj Close']]
+            elif 'Adj Close' in data.columns.get_level_values(0):
+                data = data.xs('Adj Close', axis=1, level=0)
             else:
-                st.error("No se encontro la columna 'Adj Close' en los datos descargados.")
+                st.error("❌ No se encontró la columna 'Adj Close' en los datos descargados.")
                 st.stop()
+        else:
+            # Caso: descarga de un solo ticker (sin MultiIndex)
+            if 'Adj Close' in data.columns:
+                data = data[['Adj Close']]
+            else:
+                st.error("❌ No se encontró la columna 'Adj Close' en los datos descargados.")
+                st.stop()
+        
 
         # --- Cálculo de rendimientos diarios ---
         if 'Adj Close' in data.columns:
