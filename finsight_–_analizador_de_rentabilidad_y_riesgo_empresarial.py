@@ -88,19 +88,32 @@ if st.button("Analizar Empresa"):
             st.error("❌ No se encontró la columna 'Adj Close' en los datos descargados.")
             st.stop()
 
-        # --- Calcular rendimientos diarios ---
-        data["Daily Return"] = data["Adj Close"].pct_change()
+        # Cálculo de rendimientos diarios
+# ✅ CORRECCIÓN: esta línea maneja bien el 'Adj Close' sin importar el formato del DataFrame
+if 'Adj Close' in data.columns:
+    precios = data['Adj Close']
+elif isinstance(data.columns, pd.MultiIndex) and ('Adj Close' in data.columns.get_level_values(1)):
+    precios = data.xs('Adj Close', axis=1, level=1)
+else:
+    st.error("No se encontró la columna 'Adj Close' en los datos descargados.")
+    st.stop()
 
-        avg_return = data["Daily Return"].mean()
-        std_dev = data["Daily Return"].std()
-        sharpe_ratio = avg_return / std_dev if std_dev != 0 else 0
+data = precios
+data["Daily Return"] = data.pct_change()
 
-        # --- Tabla de métricas ---
-        metrics_df = pd.DataFrame({
-            'Indicador': ['Rentabilidad promedio (%)', 'Riesgo (Desviación estándar %)', 'Sharpe Ratio'],
-            'Valor': [avg_return * 100, std_dev * 100, sharpe_ratio]
-        })
-        st.table(metrics_df)
+# Calcular métricas
+avg_return = data["Daily Return"].mean()
+volatility = data["Daily Return"].std()
+sharpe_ratio = avg_return / volatility if volatility != 0 else 0
+
+metrics_df = pd.DataFrame({
+    "Rendimiento Promedio Diario": [avg_return],
+    "Volatilidad Diaria": [volatility],
+    "Ratio Sharpe": [sharpe_ratio]
+})
+
+st.subheader("📊 Métricas de Rentabilidad y Riesgo")
+st.dataframe(metrics_df.style.format("{:.2%}"))
 
         # --- Gráfico de precios ---
         st.subheader("Evolución del precio ajustado")
