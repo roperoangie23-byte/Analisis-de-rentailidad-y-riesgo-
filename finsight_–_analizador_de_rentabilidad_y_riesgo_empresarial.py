@@ -77,10 +77,13 @@ if st.button("Analizar Empresa"):
         st.success(f"✅ Datos descargados exitosamente para **{ticker}**")
 
         # --- Cálculos ---
-        data["Daily Return"] = data["Adj Close"].pct_change()
-        avg_return = data["Daily Return"].mean()
-        std_dev = data["Daily Return"].std()
-        sharpe_ratio = avg_return / std_dev if std_dev != 0 else 0
+        # Si los datos vienen con varios tickers, tomamos solo la parte de 'Adj Close'
+if isinstance(data.columns, pd.MultiIndex):
+    data = data["Adj Close"]
+
+# Calculamos los rendimientos diarios
+data["Daily Return"] = data.pct_change()
+
 
         # --- Tabla de métricas ---
         metrics_df = pd.DataFrame({
