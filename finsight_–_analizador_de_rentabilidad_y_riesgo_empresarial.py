@@ -60,15 +60,16 @@ start_date = st.date_input("Fecha inicial:", pd.to_datetime("2020-01-01"))
 end_date = st.date_input("Fecha final:", pd.to_datetime("2024-12-31"))
 
 if st.button("Analizar Empresa"):
-    data = yf.download(ticker, start=start_date, end=end_date, progress=False)
+   data = yf.download(ticker, start=start_date, end=end_date, progress=False)
 
-    if data.empty:
-        st.error("❌ No se encontraron datos para el ticker especificado.")
-    else:
-        st.success(f"✅ Datos descargados exitosamente para **{ticker}**")
+if data.empty:
+    st.error("❌ No se encontraron datos para el ticker especificado.")
+else:
+    st.success(f"✅ Datos descargados exitosamente para **{ticker}**")
 
-        # Cálculos básicos
-        data["Daily Return"] = data["Adj Close"].pct_change()
+    # Cálculos básicos
+    data["Daily Return"] = data["Adj Close"].pct_change()
+
         avg_return = data["Daily Return"].mean()
         std_dev = data["Daily Return"].std()
         sharpe_ratio = avg_return / std_dev if std_dev != 0 else 0
