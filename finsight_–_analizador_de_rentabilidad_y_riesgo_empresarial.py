@@ -67,9 +67,15 @@ if st.button("Analizar"):
         # 📉 Histograma de rendimientos diarios
         st.subheader("Distribución de los rendimientos diarios")
         fig2, ax2 = plt.subplots()
-        sns.histplot(data["Daily Return"].dropna().melt(value_name="Return")["Return"], bins=30, kde=True, ax=ax2)
+        sns.histplot(
+            data["Daily Return"].dropna().melt(value_name="Return")["Return"],
+            bins=30,
+            kde=True,
+            ax=ax2
+        )
         ax2.set_title("Distribución de rendimientos diarios combinados")
         st.pyplot(fig2)
+
 
 
 
