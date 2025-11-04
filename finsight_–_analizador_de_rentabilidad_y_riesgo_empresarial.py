@@ -2,8 +2,8 @@
 """
 FinSight - Analizador de Rentabilidad y Riesgo Empresarial
 Aplicación Streamlit para análisis financiero de empresas
-Autor: Angie [Tu Apellido]
-Versión: 1.0
+Autor: Angie, Dayana y Jhony
+Versión: 2.0 (con barra lateral y comparación múltiple)
 """
 
 # ==========================
@@ -23,12 +23,8 @@ st.set_page_config(page_title="FinSight", page_icon="💼", layout="wide")
 
 st.markdown("""
     <style>
-        .main {
-            background-color: #f9f9fb;
-        }
-        h1, h2, h3 {
-            color: #1f4e79;
-        }
+        .main { background-color: #f9f9fb; }
+        h1, h2, h3 { color: #1f4e79; }
         .stButton>button {
             background-color: #1f4e79;
             color: white;
@@ -43,45 +39,57 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================
-# 💼 Encabezado de la aplicación
+# 🎯 SELECCIÓN DE EMPRESAS (SIDEBAR)
+# ==========================
+st.sidebar.header("📊 Configuración de análisis")
+
+default_tickers = ["AAPL", "MSFT", "AMZN", "GOOGL", "META"]
+tickers_input = st.sidebar.text_input(
+    "Empresas a analizar (separadas por comas):",
+    value=",".join(default_tickers)
+)
+tickers = [t.strip().upper() for t in tickers_input.split(",") if t.strip() != ""]
+st.sidebar.write("**Empresas seleccionadas:**", ", ".join(tickers))
+
+start_date = st.sidebar.date_input("📅 Fecha inicial:", pd.to_datetime("2020-01-01"))
+end_date = st.sidebar.date_input("📅 Fecha final:", pd.to_datetime("2024-12-31"))
+
+# ==========================
+# 💼 Encabezado principal
 # ==========================
 st.title("💼 FinSight – Analizador de Rentabilidad y Riesgo Empresarial")
 st.write("Explora y compara el desempeño financiero de distintas empresas mediante métricas de rentabilidad, riesgo y eficiencia.")
-
 st.markdown("---")
 
 # ==========================
-# 📊 SECCIÓN 1: ANÁLISIS INDIVIDUAL
+# 📈 SECCIÓN 1: ANÁLISIS INDIVIDUAL
 # ==========================
 st.header("📈 Análisis Individual de Empresa")
 
-ticker = st.text_input("Ingresa el ticker de la empresa (por ejemplo: AAPL, MSFT, NVDA):", "AAPL")
-start_date = st.date_input("Fecha inicial:", pd.to_datetime("2020-01-01"))
-end_date = st.date_input("Fecha final:", pd.to_datetime("2024-12-31"))
+ticker = st.selectbox("Selecciona la empresa a analizar:", tickers)
 
 if st.button("Analizar Empresa"):
-   data = yf.download(ticker, start=start_date, end=end_date, progress=False)
+    data = yf.download(ticker, start=start_date, end=end_date, progress=False)
 
-if data.empty:
-    st.error("❌ No se encontraron datos para el ticker especificado.")
-else:
-    st.success(f"✅ Datos descargados exitosamente para **{ticker}**")
+    if data.empty:
+        st.error("❌ No se encontraron datos para el ticker especificado.")
+    else:
+        st.success(f"✅ Datos descargados exitosamente para **{ticker}**")
 
-    # Cálculos básicos
-    data["Daily Return"] = data["Adj Close"].pct_change()
-
+        # --- Cálculos ---
+        data["Daily Return"] = data["Adj Close"].pct_change()
         avg_return = data["Daily Return"].mean()
         std_dev = data["Daily Return"].std()
         sharpe_ratio = avg_return / std_dev if std_dev != 0 else 0
 
-        # Tabla de métricas
+        # --- Tabla de métricas ---
         metrics_df = pd.DataFrame({
             'Indicador': ['Rentabilidad promedio (%)', 'Riesgo (Desviación estándar %)', 'Sharpe Ratio'],
             'Valor': [avg_return * 100, std_dev * 100, sharpe_ratio]
         })
         st.table(metrics_df)
 
-        # Gráfico de precios
+        # --- Gráfico de precios ---
         st.subheader("Evolución del precio ajustado")
         fig, ax = plt.subplots()
         ax.plot(data["Adj Close"], color='#1f77b4', linewidth=2)
@@ -90,7 +98,7 @@ else:
         ax.set_ylabel("Precio ($)")
         st.pyplot(fig)
 
-        # Histograma de retornos
+        # --- Histograma de rendimientos ---
         st.subheader("Distribución de los rendimientos diarios")
         fig2, ax2 = plt.subplots()
         sns.histplot(data["Daily Return"].dropna(), bins=30, kde=True, ax=ax2, color='#ff7f0e')
@@ -98,17 +106,16 @@ else:
         st.pyplot(fig2)
 
 # ==========================
-# ⚖ SECCIÓN 2: COMPARATIVO DE DOS EMPRESAS
+# ⚖ SECCIÓN 2: COMPARATIVO DE EMPRESAS
 # ==========================
 st.markdown("---")
 st.header("📊 Comparativo de Empresas")
 
 col1, col2 = st.columns(2)
-
 with col1:
-    ticker1 = st.text_input("Ticker empresa 1:", "AAPL")
+    ticker1 = st.selectbox("Ticker empresa 1:", tickers, index=0)
 with col2:
-    ticker2 = st.text_input("Ticker empresa 2:", "MSFT")
+    ticker2 = st.selectbox("Ticker empresa 2:", tickers, index=1)
 
 if st.button("Comparar Empresas"):
     data = yf.download([ticker1, ticker2], start=start_date, end=end_date, progress=False)['Adj Close']
@@ -121,7 +128,7 @@ if st.button("Comparar Empresas"):
     else:
         st.success("✅ Datos cargados correctamente.")
 
-        # Gráfico comparativo
+        # --- Gráfico comparativo ---
         st.subheader("Evolución comparativa de precios ajustados")
         fig, ax = plt.subplots()
         data.plot(ax=ax, linewidth=2)
@@ -131,7 +138,7 @@ if st.button("Comparar Empresas"):
         ax.legend(title="Empresas")
         st.pyplot(fig)
 
-        # Cálculo de correlación
+        # --- Matriz de correlación ---
         returns = data.pct_change().dropna()
         st.subheader("Matriz de correlación de retornos diarios")
         fig2, ax2 = plt.subplots()
@@ -145,13 +152,11 @@ st.markdown("---")
 st.header("💹 Simulador de Portafolio de Inversión")
 
 colp1, colp2 = st.columns(2)
-
 with colp1:
-    p_ticker1 = st.text_input("📊 Empresa 1 (Ticker):", "AAPL")
+    p_ticker1 = st.selectbox("📊 Empresa 1 (Ticker):", tickers, index=0)
     w1 = st.slider("Peso (%) Empresa 1", 0, 100, 50)
-
 with colp2:
-    p_ticker2 = st.text_input("📈 Empresa 2 (Ticker):", "MSFT")
+    p_ticker2 = st.selectbox("📈 Empresa 2 (Ticker):", tickers, index=1)
     w2 = 100 - w1
     st.write(f"Peso Empresa 2: **{w2}%**")
 
@@ -171,7 +176,7 @@ if st.button("Calcular Portafolio"):
         returns = p_data.pct_change().dropna()
         weights = np.array([w1/100, w2/100])
 
-        # Cálculos del portafolio
+        # --- Cálculos del portafolio ---
         exp_return = np.sum(returns.mean() * weights) * 252
         cov_matrix = returns.cov() * 252
         port_variance = np.dot(weights.T, np.dot(cov_matrix, weights))
@@ -183,18 +188,16 @@ if st.button("Calcular Portafolio"):
         st.write(f"**Riesgo (Desviación estándar anual):** {port_std_dev*100:.2f}%")
         st.write(f"**Sharpe Ratio:** {sharpe_ratio:.2f}")
 
-        # Pie chart
+        # --- Pie chart ---
         st.subheader("📊 Composición del portafolio")
         fig, ax = plt.subplots(figsize=(4, 4))
         ax.pie(weights, labels=[p_ticker1, p_ticker2], autopct='%1.1f%%', startangle=90, colors=['#1f77b4', '#ff7f0e'])
         ax.axis('equal')
         st.pyplot(fig)
 
-        # Frontera eficiente simple
+        # --- Frontera eficiente ---
         st.subheader("📈 Frontera eficiente simulada")
-        port_returns = []
-        port_risks = []
-
+        port_returns, port_risks = [], []
         for w in np.linspace(0, 1, 100):
             wts = np.array([w, 1-w])
             r = np.sum(returns.mean() * wts) * 252
@@ -212,7 +215,7 @@ if st.button("Calcular Portafolio"):
         st.pyplot(fig2)
 
 # ==========================
-# 🧾 Pie de página institucional
+# 🧾 Pie de página
 # ==========================
 st.markdown("---")
 st.markdown("""
