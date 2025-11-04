@@ -78,15 +78,19 @@ if st.button("Analizar Empresa"):
 
         # --- Asegurar que solo quede una columna de 'Adj Close' ---
         if isinstance(data.columns, pd.MultiIndex):
-            if 'Adj Close' in data.columns.get_level_values(0):
-                data = data['Adj Close']
-            else:
-                data = data.xs('Adj Close', axis=1, level=1, drop_level=False)
-        elif "Adj Close" in data.columns:
-            data = data[["Adj Close"]]  # mantener formato DataFrame
+            if 'Adj Close' in data.columns.get_level_values(1):
+                data = data.xs('Adj Close', axis=1, level=1)
+        elif 'Adj Close' in data.columns.get_level_values(0):
+            data = data.xs('Adj Close', axis=1, level=0)
         else:
             st.error("❌ No se encontró la columna 'Adj Close' en los datos descargados.")
             st.stop()
+        else:
+            if 'Adj Close' in data.columns:
+                data=data[['Adj Close']]
+            else:
+                st.error("No se encontro la columna 'Adj Close' en los datos descargados.")
+                st.stop()
 
         # --- Cálculo de rendimientos diarios ---
         if 'Adj Close' in data.columns:
