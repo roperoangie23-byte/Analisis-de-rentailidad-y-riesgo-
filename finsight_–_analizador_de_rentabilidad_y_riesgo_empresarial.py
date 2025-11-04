@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-st.set_page_config(page_title:"FinSight", page_icon="💼", layout="wide")
+st.set_page_config(page_title="FinSight", page_icon="💼", layout="wide")
 
 # 💠 Estilos personalizados
 st.markdown("""
