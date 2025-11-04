@@ -1,69 +1,85 @@
-    if st.sidebar.button("Comparar empresas"):
-        data1 = yf.download(ticker1, start=start_date, end=end_date, progress=False)
-        data2 = yf.download(ticker2, start=start_date, end=end_date, progress=False)
+# ==========================
+# 💼 NUEVA SECCIÓN: PORTAFOLIO
+# ==========================
 
-        if data1.empty or data2.empty:
-            st.error("❌ Verifica los tickers, no se encontraron datos.")
-        else:
-            st.success(f"✅ Comparando **{ticker1}** y **{ticker2}**")
+st.markdown("---")
+st.header("💹 Simulador de Portafolio de Inversión")
 
-            # 🔍 Manejo de MultiIndex si es necesario
-            if isinstance(data1.columns, pd.MultiIndex):
-                data1 = data1['Adj Close'] if 'Adj Close' in data1.columns.levels[0] else data1['Close']
-            else:
-                data1 = data1[['Adj Close']] if 'Adj Close' in data1.columns else data1[['Close']]
+colp1, colp2 = st.columns(2)
 
-            if isinstance(data2.columns, pd.MultiIndex):
-                data2 = data2['Adj Close'] if 'Adj Close' in data2.columns.levels[0] else data2['Close']
-            else:
-                data2 = data2[['Adj Close']] if 'Adj Close' in data2.columns else data2[['Close']]
+with colp1:
+    p_ticker1 = st.text_input("📊 Empresa 1 (Ticker):", "AAPL")
+    w1 = st.slider("Peso (%) Empresa 1", 0, 100, 50)
 
-            # Renombrar columnas para que no se mezclen
-            data1.columns = [ticker1]
-            data2.columns = [ticker2]
+with colp2:
+    p_ticker2 = st.text_input("📈 Empresa 2 (Ticker):", "MSFT")
+    w2 = 100 - w1
+    st.write(f"Peso Empresa 2: **{w2}%**")
 
-            # Unir datos por fecha
-            data = pd.concat([data1, data2], axis=1).dropna()
+if st.button("Calcular Portafolio"):
+    # Descargar datos de ambas empresas
+    p_data = yf.download([p_ticker1, p_ticker2], start=start_date, end=end_date, progress=False)['Adj Close']
 
-            # Calcular retornos
-            returns = data.pct_change().dropna()
+    if isinstance(p_data.columns, pd.MultiIndex):
+        p_data.columns = p_data.columns.get_level_values(1)
 
-            # 📊 Estadísticas
-            avg1, avg2 = returns[ticker1].mean(), returns[ticker2].mean()
-            std1, std2 = returns[ticker1].std(), returns[ticker2].std()
-            corr = returns[ticker1].corr(returns[ticker2])
+    p_data = p_data.dropna()
 
-            col1, col2, col3 = st.columns(3)
-            col1.metric(f"Rentabilidad {ticker1}", f"{avg1*100:.2f}%")
-            col2.metric(f"Rentabilidad {ticker2}", f"{avg2*100:.2f}%")
-            col3.metric("Correlación", f"{corr:.2f}")
+    if p_data.empty:
+        st.error("❌ No se encontraron datos para los tickers seleccionados.")
+    else:
+        st.success(f"Datos obtenidos para **{p_ticker1}** y **{p_ticker2}**")
 
-            # 📈 Gráfico comparativo
-            st.subheader("📉 Comparación de precios históricos")
-            fig, ax = plt.subplots(figsize=(10, 5))
-            ax.plot(data[ticker1], label=ticker1, linewidth=2)
-            ax.plot(data[ticker2], label=ticker2, linewidth=2)
-            ax.set_title("Evolución de precios ajustados")
-            ax.legend()
-            st.pyplot(fig)
+        # Calcular retornos diarios
+        returns = p_data.pct_change().dropna()
 
-            # 📊 Dispersión de rendimientos
-            st.subheader("📊 Relación entre los rendimientos")
-            fig2, ax2 = plt.subplots(figsize=(7, 5))
-            sns.scatterplot(x=returns[ticker1], y=returns[ticker2], ax=ax2)
-            ax2.set_xlabel(f"Rendimientos {ticker1}")
-            ax2.set_ylabel(f"Rendimientos {ticker2}")
-            ax2.set_title("Correlación de rendimientos")
-            st.pyplot(fig2)
+        # Pesos del portafolio
+        weights = np.array([w1/100, w2/100])
 
-            # 🧠 Conclusión automática
-            st.markdown("### 📈 Conclusión del análisis")
-            if corr > 0.7:
-                st.info(f"Los rendimientos de **{ticker1}** y **{ticker2}** están fuertemente correlacionados — se mueven en la misma dirección.")
-            elif corr > 0.3:
-                st.warning(f"Existe una correlación moderada entre **{ticker1}** y **{ticker2}**.")
-            else:
-                st.success(f"Los rendimientos de **{ticker1}** y **{ticker2}** son poco o nada correlacionados — buena opción para diversificar.")
+        # Rentabilidad esperada del portafolio
+        exp_return = np.sum(returns.mean() * weights) * 252  # anualizada
+
+        # Riesgo del portafolio
+        cov_matrix = returns.cov() * 252
+        port_variance = np.dot(weights.T, np.dot(cov_matrix, weights))
+        port_std_dev = np.sqrt(port_variance)
+
+        # Ratio de Sharpe (supone tasa libre de riesgo 0%)
+        sharpe_ratio = exp_return / port_std_dev
+
+        # Mostrar resultados
+        st.subheader("📈 Resultados del Portafolio")
+        st.write(f"**Rentabilidad esperada (anualizada):** {exp_return*100:.2f}%")
+        st.write(f"**Riesgo (Desviación estándar anual):** {port_std_dev*100:.2f}%")
+        st.write(f"**Sharpe Ratio:** {sharpe_ratio:.2f}")
+
+        # 📊 Visualización de pesos
+        st.subheader("📊 Composición del portafolio")
+        fig, ax = plt.subplots(figsize=(4, 4))
+        ax.pie(weights, labels=[p_ticker1, p_ticker2], autopct='%1.1f%%', startangle=90, colors=['#1f77b4', '#ff7f0e'])
+        ax.axis('equal')
+        st.pyplot(fig)
+
+        # 🔵 Frontera eficiente simple (variando pesos)
+        st.subheader("📈 Frontera eficiente simulada")
+        port_returns = []
+        port_risks = []
+
+        for w in np.linspace(0, 1, 100):
+            wts = np.array([w, 1-w])
+            r = np.sum(returns.mean() * wts) * 252
+            s = np.sqrt(np.dot(wts.T, np.dot(cov_matrix, wts)))
+            port_returns.append(r)
+            port_risks.append(s)
+
+        fig2, ax2 = plt.subplots(figsize=(7, 5))
+        ax2.plot(port_risks, port_returns, 'b-', linewidth=2)
+        ax2.scatter(port_std_dev, exp_return, color='red', s=80, label='Tu portafolio')
+        ax2.set_xlabel('Riesgo (Desviación estándar)')
+        ax2.set_ylabel('Rentabilidad esperada')
+        ax2.set_title('Frontera eficiente (2 activos)')
+        ax2.legend()
+        st.pyplot(fig2)
 
 
 
