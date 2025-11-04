@@ -90,7 +90,7 @@ if opcion == "Análisis individual":
 # =====================================================
 #  VISTA 2: ANÁLISIS COMPARATIVO
 # =====================================================
- elif opcion == "Análisis comparativo":
+elif opcion == "Análisis comparativo":
     st.sidebar.header("Configuración comparativa")
     ticker1 = st.sidebar.text_input("Empresa 1:", "AAPL")
     ticker2 = st.sidebar.text_input("Empresa 2:", "MSFT")
