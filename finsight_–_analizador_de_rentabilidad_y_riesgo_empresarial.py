@@ -228,5 +228,3 @@ Hecho con Python usando **Streamlit** | Datos: *Yahoo Finance API*
 
 
 
-
-
