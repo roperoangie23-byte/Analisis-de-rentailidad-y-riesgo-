@@ -216,7 +216,7 @@ if st.button("Calcular Portafolio"):
 st.markdown("---")
 st.markdown("""
 #### 💼 FinSight – “Analiza, Decide, Invierte”
-Desarrollado por **Angie, Dayana y Jhony**, estudiante de Análisis de costos y presupuestos.  
+Desarrollado por **Angie, Dayana y Jhony**, estudiantes de Análisis de costos y presupuestos.  
 Hecho con Python usando **Streamlit** | Datos: *Yahoo Finance API*  
 """)
 
