@@ -121,7 +121,7 @@ elif opcion == "Análisis comparativo":
             corr = data1["Daily Return"].corr(data2["Daily Return"])
 
             # Resultados
-            col1, col2, col3, col4, col4, col5 = st.columns(5)
+            col1, col2, col3, col4, col5 = st.columns(5)
             col1.metric(f"Rentabilidad {ticker1}", f"{avg1*100:.2f}%")
             col2.metric(f"Rentabilidad {ticker2}", f"{avg2*100:.2f}%")
             col3.metric(f"Rentabilidad {ticker2}", f"{avg2*100:.2f}%")
