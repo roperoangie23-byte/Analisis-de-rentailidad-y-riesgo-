@@ -94,6 +94,8 @@ elif opcion == "Análisis comparativo":
     st.sidebar.header("Configuración comparativa")
     ticker1 = st.sidebar.text_input("Empresa 1:", "AAPL")
     ticker2 = st.sidebar.text_input("Empresa 2:", "MSFT")
+    ticker3 = st.sidebar.text_input("Empresa 2:", "NFLX")
+    ticker4 = st.sidebar.text_input("Empresa 2:", "IBM")
     start_date = st.sidebar.date_input("Fecha inicial:", pd.to_datetime("2020-01-01"))
     end_date = st.sidebar.date_input("Fecha final:", pd.to_datetime("2024-12-31"))
 
