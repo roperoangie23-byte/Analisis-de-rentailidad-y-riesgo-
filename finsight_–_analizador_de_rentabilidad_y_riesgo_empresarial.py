@@ -1,4 +1,4 @@
-# 💼 FinSight – Analizador de Rentabilidad y Riesgo Empresarial (Versión Final)
+# 💼 FinSight – Analizador de Rentabilidad y Riesgo Empresarial (Versión Final con Benchmark)
 import streamlit as st
 import yfinance as yf
 import pandas as pd
@@ -63,8 +63,8 @@ def exportar_pdf(df):
             pdf.cell(60, 10, txt=texto, border=1, align='C')
         pdf.ln()
     
-    # Exportación corregida (modo seguro para Streamlit)
-    pdf_bytes = pdf.output(dest='S').encode('latin-1')  # devuelve el PDF como cadena binaria
+    # Exportación segura
+    pdf_bytes = pdf.output(dest='S').encode('latin-1')
     return pdf_bytes
 
 # ==========================================
@@ -191,7 +191,38 @@ elif opcion == "Análisis comparativo":
                 colx.download_button("⬇️ Descargar comparativo Excel", data=excel_data, file_name="FinSight_Comparativo.xlsx")
                 coly.download_button("📄 Descargar comparativo PDF", data=pdf_data, file_name="FinSight_Comparativo.pdf")
 
-                # --- Gráficos ---
+                # --- Benchmark (S&P 500) ---
+                st.subheader("📊 Comparación con Benchmark (S&P 500)")
+                benchmark = yf.download("^GSPC", start=start_date, end=end_date, interval=intervalo, progress=False)
+                if not benchmark.empty:
+                    benchmark['Daily Return'] = benchmark['Adj Close'].pct_change()
+                    benchmark_ret = benchmark['Daily Return'].mean()
+                    benchmark_vol = benchmark['Daily Return'].std()
+                    benchmark_sharpe = benchmark_ret / benchmark_vol if benchmark_vol != 0 else 0
+                    benchmark_cum = (1 + benchmark['Daily Return']).prod() - 1
+
+                    colb1, colb2, colb3, colb4 = st.columns(4)
+                    colb1.metric("Rentabilidad promedio (S&P 500)", f"{benchmark_ret*100:.2f}%")
+                    colb2.metric("Volatilidad (S&P 500)", f"{benchmark_vol*100:.2f}%")
+                    colb3.metric("Sharpe (S&P 500)", f"{benchmark_sharpe:.2f}")
+                    colb4.metric("Rentabilidad acumulada", f"{benchmark_cum*100:.2f}%")
+
+                    # --- Comparación visual ---
+                    st.subheader("📈 Benchmark vs Promedio de Empresas")
+                    figb, axb = plt.subplots(figsize=(8,4))
+                    empresas_avg = (1 + daily_returns.mean(axis=1)).cumprod()
+                    benchmark_cumserie = (1 + benchmark['Daily Return']).cumprod()
+                    axb.plot(empresas_avg.index, empresas_avg, label="Promedio Empresas", color="#0078D7")
+                    axb.plot(benchmark_cumserie.index, benchmark_cumserie, label="S&P 500", color="#FF5733", linestyle="--")
+                    axb.set_title("Comparación del rendimiento acumulado")
+                    axb.set_xlabel("Fecha")
+                    axb.set_ylabel("Crecimiento acumulado")
+                    axb.legend()
+                    st.pyplot(figb)
+                else:
+                    st.warning("⚠️ No se pudieron obtener datos del benchmark (S&P 500).")
+
+                # --- Gráficos adicionales ---
                 st.subheader("📈 Índice de Sharpe por empresa")
                 fig3, ax3 = plt.subplots(figsize=(8,4))
                 sharpe_ratios.sort_values().plot(kind='bar', color='#009688', ax=ax3)
@@ -227,5 +258,6 @@ elif opcion == "Análisis comparativo":
 # ==========================================
 st.markdown("---")
 st.markdown("<p style='text-align:center; color:gray;'>© 2025 FinSight | Desarrollado por Angie, Jhony y Dayana</p>", unsafe_allow_html=True)
+
 
 
