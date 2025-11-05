@@ -260,5 +260,3 @@ st.markdown("---")
 st.markdown("<p style='text-align:center; color:gray;'>© 2025 FinSight | Desarrollado por Angie, Jhony y Dayana</p>", unsafe_allow_html=True)
 
 
-
-
