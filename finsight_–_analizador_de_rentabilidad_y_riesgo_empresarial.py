@@ -94,8 +94,8 @@ elif opcion == "Análisis comparativo":
     st.sidebar.header("Configuración comparativa")
     ticker1 = st.sidebar.text_input("Empresa 1:", "AAPL")
     ticker2 = st.sidebar.text_input("Empresa 2:", "MSFT")
-    ticker3 = st.sidebar.text_input("Empresa 2:", "NFLX")
-    ticker4 = st.sidebar.text_input("Empresa 2:", "IBM")
+    ticker3 = st.sidebar.text_input("Empresa 3:", "NFLX")
+    ticker4 = st.sidebar.text_input("Empresa 4:", "IBM")
     start_date = st.sidebar.date_input("Fecha inicial:", pd.to_datetime("2020-01-01"))
     end_date = st.sidebar.date_input("Fecha final:", pd.to_datetime("2024-12-31"))
 
@@ -106,7 +106,7 @@ elif opcion == "Análisis comparativo":
         if data1.empty or data2.empty:
             st.error("Verifica los tickers, no se encontraron datos.")
         else:
-            st.success(f"Comparando *{ticker1}* y *{ticker2}*")
+            st.success(f"Comparando *{ticker1}*, *{ticker2}*, {ticker3}* y *{ticker4}*")
 
             # Cálculos
             for df in [data1, data2]:
