@@ -102,6 +102,8 @@ elif opcion == "Análisis comparativo":
     if st.sidebar.button("Comparar empresas"):
         data1 = yf.download(ticker1, start=start_date, end=end_date, progress=False)
         data2 = yf.download(ticker2, start=start_date, end=end_date, progress=False)
+        data3 = yf.download(ticker3, start=start_date, end=end_date, progress=False)
+        data4 = yf.download(ticker4, start=start_date, end=end_date, progress=False)
 
         if data1.empty or data2.empty:
             st.error("Verifica los tickers, no se encontraron datos.")
@@ -119,15 +121,17 @@ elif opcion == "Análisis comparativo":
             corr = data1["Daily Return"].corr(data2["Daily Return"])
 
             # Resultados
-            col1, col2, col3 = st.columns(3)
+            col1, col2, col3, col4, col4, col5 = st.columns(5)
             col1.metric(f"Rentabilidad {ticker1}", f"{avg1*100:.2f}%")
             col2.metric(f"Rentabilidad {ticker2}", f"{avg2*100:.2f}%")
-            col3.metric("Correlación", f"{corr:.2f}")
+            col3.metric(f"Rentabilidad {ticker2}", f"{avg2*100:.2f}%")
+            col4.metric(f"Rentabilidad {ticker2}", f"{avg2*100:.2f}%")
+            col5.metric("Correlación", f"{corr:.2f}")
 
             # Gráfico comparativo
             st.subheader("Comparación de precios históricos")
             fig, ax = plt.subplots(figsize=(10, 5))
-            for df, ticker in [(data1, ticker1), (data2, ticker2)]:
+            for df, ticker in [(data1, ticker1), (data2, ticker2), (data1, ticker3), (data2, ticker4)]:
                 price_col = "Adj Close" if "Adj Close" in df.columns else "Close"
                 ax.plot(df[price_col], label=ticker, linewidth=2)
             ax.set_title("Evolución de precios ajustados")
@@ -146,11 +150,11 @@ elif opcion == "Análisis comparativo":
             # 🧠 Conclusión automática
             st.markdown("Conclusión del análisis")
             if corr > 0.7:
-                st.info(f"Los rendimientos de *{ticker1}* y *{ticker2}* están fuertemente correlacionados — se mueven en la misma dirección.")
+                st.info(f"Los rendimientos de *{ticker1}*, *{ticker2}*, *{ticker3}* y *{ticker4}* están fuertemente correlacionados — se mueven en la misma dirección.")
             elif corr > 0.3:
-                st.warning(f"Existe una correlación moderada entre *{ticker1}* y *{ticker2}*.")
+                st.warning(f"Existe una correlación moderada entre *{ticker1}*, *{ticker2}*, *{ticker3}* y *{ticker4}*.")
             else:
-                st.success(f"Los rendimientos de *{ticker1}* y *{ticker2}* son poco o nada correlacionados — buena opción para diversificar.")
+                st.success(f"Los rendimientos de *{ticker1}*, *{ticker2}*, *{ticker3}* y *{ticker4}* son poco o nada correlacionados — buena opción para diversificar.")
 
 # Footer
 st.markdown("---")
