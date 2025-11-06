@@ -1,5 +1,5 @@
 # FinSight – Analizador de Rentabilidad y Riesgo Empresarial (Versión Final con Benchmark)
-import streamlit as 
+import streamlit as st 
 import yfinance as yf
 import pandas as pd
 import numpy as np
