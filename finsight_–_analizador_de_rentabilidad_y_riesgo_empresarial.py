@@ -1,4 +1,4 @@
-# 💼 FinSight – Analizador de Rentabilidad y Riesgo Empresarial (Versión Final con Benchmark)
+# FinSight – Analizador de Rentabilidad y Riesgo Empresarial (Versión Final con Benchmark)
 import streamlit as st
 import yfinance as yf
 import pandas as pd
