@@ -1,5 +1,5 @@
-# FinSight – Analizador de Rentabilidad y Riesgo Empresarial (Versión Final con Benchmark)
-import streamlit as st 
+# 💼 FinSight – Analizador de Rentabilidad y Riesgo Empresarial (Versión Final)
+import streamlit as st
 import yfinance as yf
 import pandas as pd
 import numpy as np
@@ -63,8 +63,8 @@ def exportar_pdf(df):
             pdf.cell(60, 10, txt=texto, border=1, align='C')
         pdf.ln()
     
-    # Exportación segura
-    pdf_bytes = pdf.output(dest='S').encode('latin-1')
+    # Exportación corregida (modo seguro para Streamlit)
+    pdf_bytes = pdf.output(dest='S').encode('latin-1')  # devuelve el PDF como cadena binaria
     return pdf_bytes
 
 # ==========================================
@@ -73,20 +73,20 @@ def exportar_pdf(df):
 opcion = st.sidebar.radio("Selecciona una vista:", ["Análisis individual", "Análisis comparativo"])
 
 # ==========================================
-# ANÁLISIS INDIVIDUAL
+# 📈 ANÁLISIS INDIVIDUAL
 # ==========================================
 if opcion == "Análisis individual":
     st.sidebar.header("⚙ Configuración de análisis individual")
-    ticker = st.sidebar.text_input("Ticker de la empresa:", "AAPL")
-    start_date = st.sidebar.date_input("Fecha inicial:", pd.to_datetime("2020-01-01"))
-    end_date = st.sidebar.date_input("Fecha final:", pd.to_datetime("2024-12-31"))
+    ticker = st.sidebar.text_input("📊 Ticker de la empresa:", "AAPL")
+    start_date = st.sidebar.date_input("📅 Fecha inicial:", pd.to_datetime("2020-01-01"))
+    end_date = st.sidebar.date_input("📅 Fecha final:", pd.to_datetime("2024-12-31"))
 
     if st.sidebar.button("Analizar empresa"):
         data = yf.download(ticker, start=start_date, end=end_date, progress=False)
         if data.empty:
-            st.error("No se encontraron datos para el ticker especificado.")
+            st.error("❌ No se encontraron datos para el ticker especificado.")
         else:
-            st.success(f"Datos descargados correctamente para *{ticker}*")
+            st.success(f"✅ Datos descargados correctamente para *{ticker}*")
 
             price_col = "Adj Close" if "Adj Close" in data.columns else "Close"
             data["Daily Return"] = data[price_col].pct_change()
@@ -94,7 +94,7 @@ if opcion == "Análisis individual":
             std_dev = data["Daily Return"].std()
             risk_free_rate = 0
             sharpe_ratio = (avg_return - risk_free_rate) / std_dev if std_dev != 0 else 0
-            vol_anual = std_dev * np.sqrt(252)
+            vol_anual = std_dev * np.sqrt(252) # Aquí se usa 252 por defecto para datos diarios
             cum_return = (1 + data["Daily Return"]).prod() - 1
 
             # --- Métricas ---
@@ -104,7 +104,7 @@ if opcion == "Análisis individual":
             col3.metric("Volatilidad anualizada", f"{vol_anual*100:.2f}%")
             col4.metric("Índice de Sharpe", f"{sharpe_ratio:.2f}")
 
-            st.markdown(f"###Rentabilidad acumulada: **{cum_return*100:.2f}%**")
+            st.markdown(f"### 📊 Rentabilidad acumulada: **{cum_return*100:.2f}%**")
 
             # --- Exportación ---
             resumen_df = pd.DataFrame({
@@ -115,11 +115,11 @@ if opcion == "Análisis individual":
             excel_data = exportar_excel(resumen_df)
             pdf_data = exportar_pdf(resumen_df)
             colx, coly = st.columns(2)
-            colx.download_button("Descargar reporte Excel", data=excel_data, file_name=f"FinSight_{ticker}.xlsx")
-            coly.download_button("Descargar reporte PDF", data=pdf_data, file_name=f"FinSight_{ticker}.pdf")
+            colx.download_button("⬇️ Descargar reporte Excel", data=excel_data, file_name=f"FinSight_{ticker}.xlsx")
+            coly.download_button("📄 Descargar reporte PDF", data=pdf_data, file_name=f"FinSight_{ticker}.pdf")
 
             # --- Gráficos ---
-            st.subheader("Evolución del precio ajustado")
+            st.subheader("📈 Evolución del precio ajustado")
             fig, ax = plt.subplots(figsize=(10,5))
             ax.plot(data[price_col], color='#0078D7', linewidth=2)
             ax.set_title(f"Precio histórico de {ticker}")
@@ -127,21 +127,23 @@ if opcion == "Análisis individual":
             ax.set_ylabel("Precio ($)")
             st.pyplot(fig)
 
-            st.subheader("Distribución de los rendimientos diarios")
+            st.subheader("📊 Distribución de los rendimientos diarios")
             fig2, ax2 = plt.subplots(figsize=(8,4))
             sns.histplot(data["Daily Return"].dropna(), bins=40, kde=True, color='#009688', ax=ax2)
             st.pyplot(fig2)
 
 # ==========================================
-# ANÁLISIS COMPARATIVO
+# 📊 ANÁLISIS COMPARATIVO
 # ==========================================
 elif opcion == "Análisis comparativo":
     st.sidebar.header("⚙ Configuración comparativa")
     tickers_input = st.sidebar.text_input("Empresas (separa por comas):", "AAPL, MSFT, NFLX, IBM")
     start_date = st.sidebar.date_input("Fecha inicial:", pd.to_datetime("2020-01-01"))
     end_date = st.sidebar.date_input("Fecha final:", pd.to_datetime("2024-12-31"))
-    inversion_inicial = st.sidebar.number_input("Inversión inicial ($):", value=10000.0, min_value=100.0)
-    frecuencia = st.sidebar.selectbox("Frecuencia temporal:", ["Diaria", "Semanal", "Mensual"])
+    inversion_inicial = st.sidebar.number_input("💰 Inversión inicial ($):", value=10000.0, min_value=100.0)
+    
+    # Se añade la variable para la frecuencia
+    frecuencia = st.sidebar.selectbox("📅 Frecuencia temporal:", ["Diaria", "Semanal", "Mensual"])
     intervalo = {"Diaria": "1d", "Semanal": "1wk", "Mensual": "1mo"}[frecuencia]
 
     tickers = [t.strip().upper() for t in tickers_input.split(",") if t.strip()]
@@ -154,7 +156,7 @@ elif opcion == "Análisis comparativo":
             data = yf.download(tickers, start=start_date, end=end_date, interval=intervalo, progress=False, group_by="ticker")
 
             if data.empty:
-                st.error("No se encontraron datos para los tickers ingresados.")
+                st.error("❌ No se encontraron datos para los tickers ingresados.")
             else:
                 st.success(f"Comparando: {', '.join(tickers)}")
 
@@ -167,7 +169,25 @@ elif opcion == "Análisis comparativo":
 
                 avg_returns = daily_returns.mean()
                 std_devs = daily_returns.std()
-                vol_anual = std_devs * np.sqrt(252)
+                
+                # --- INICIO CORRECCIÓN LÓGICA DE ANUALIZACIÓN ---
+                
+                # 1. Determinar el factor de anualización basado en la frecuencia seleccionada
+                if frecuencia == "Diaria":
+                    factor_anualizacion = 252 # Días hábiles
+                elif frecuencia == "Semanal":
+                    factor_anualizacion = 52  # Semanas
+                elif frecuencia == "Mensual":
+                    factor_anualizacion = 12  # Meses
+                else:
+                    # Falla de seguridad, aunque 'frecuencia' está restringida por selectbox
+                    factor_anualizacion = 252 
+                
+                # 2. Aplicar el factor de anualización correcto (sqrt(T))
+                vol_anual = std_devs * np.sqrt(factor_anualizacion)
+                
+                # --- FIN CORRECCIÓN LÓGICA DE ANUALIZACIÓN ---
+
                 sharpe_ratios = (avg_returns - 0) / std_devs
                 corr_matrix = daily_returns.corr()
 
@@ -188,47 +208,16 @@ elif opcion == "Análisis comparativo":
                 excel_data = exportar_excel(metrics_df)
                 pdf_data = exportar_pdf(metrics_df)
                 colx, coly = st.columns(2)
-                colx.download_button("Descargar comparativo Excel", data=excel_data, file_name="FinSight_Comparativo.xlsx")
-                coly.download_button("Descargar comparativo PDF", data=pdf_data, file_name="FinSight_Comparativo.pdf")
+                colx.download_button("⬇️ Descargar comparativo Excel", data=excel_data, file_name="FinSight_Comparativo.xlsx")
+                coly.download_button("📄 Descargar comparativo PDF", data=pdf_data, file_name="FinSight_Comparativo.pdf")
 
-                # --- Benchmark (S&P 500) ---
-                st.subheader("Comparación con Benchmark (S&P 500)")
-                benchmark = yf.download("^GSPC", start=start_date, end=end_date, interval=intervalo, progress=False)
-                if not benchmark.empty:
-                    benchmark['Daily Return'] = benchmark['Adj Close'].pct_change()
-                    benchmark_ret = benchmark['Daily Return'].mean()
-                    benchmark_vol = benchmark['Daily Return'].std()
-                    benchmark_sharpe = benchmark_ret / benchmark_vol if benchmark_vol != 0 else 0
-                    benchmark_cum = (1 + benchmark['Daily Return']).prod() - 1
-
-                    colb1, colb2, colb3, colb4 = st.columns(4)
-                    colb1.metric("Rentabilidad promedio (S&P 500)", f"{benchmark_ret*100:.2f}%")
-                    colb2.metric("Volatilidad (S&P 500)", f"{benchmark_vol*100:.2f}%")
-                    colb3.metric("Sharpe (S&P 500)", f"{benchmark_sharpe:.2f}")
-                    colb4.metric("Rentabilidad acumulada", f"{benchmark_cum*100:.2f}%")
-
-                    # --- Comparación visual ---
-                    st.subheader("Benchmark vs Promedio de Empresas")
-                    figb, axb = plt.subplots(figsize=(8,4))
-                    empresas_avg = (1 + daily_returns.mean(axis=1)).cumprod()
-                    benchmark_cumserie = (1 + benchmark['Daily Return']).cumprod()
-                    axb.plot(empresas_avg.index, empresas_avg, label="Promedio Empresas", color="#0078D7")
-                    axb.plot(benchmark_cumserie.index, benchmark_cumserie, label="S&P 500", color="#FF5733", linestyle="--")
-                    axb.set_title("Comparación del rendimiento acumulado")
-                    axb.set_xlabel("Fecha")
-                    axb.set_ylabel("Crecimiento acumulado")
-                    axb.legend()
-                    st.pyplot(figb)
-                else:
-                    st.warning("No se pudieron obtener datos del benchmark (S&P 500).")
-
-                # --- Gráficos adicionales ---
-                st.subheader("Índice de Sharpe por empresa")
+                # --- Gráficos ---
+                st.subheader("📈 Índice de Sharpe por empresa")
                 fig3, ax3 = plt.subplots(figsize=(8,4))
                 sharpe_ratios.sort_values().plot(kind='bar', color='#009688', ax=ax3)
                 st.pyplot(fig3)
 
-                st.subheader("Evolución del valor del portafolio")
+                st.subheader("📊 Evolución del valor del portafolio")
                 fig4, ax4 = plt.subplots(figsize=(10,5))
                 for ticker in tickers:
                     ax4.plot(valor_portafolio.index, valor_portafolio[ticker], label=ticker)
@@ -238,12 +227,12 @@ elif opcion == "Análisis comparativo":
                 ax4.legend()
                 st.pyplot(fig4)
 
-                st.subheader("Matriz de correlación")
+                st.subheader("🔗 Matriz de correlación")
                 fig5, ax5 = plt.subplots(figsize=(6,5))
                 sns.heatmap(corr_matrix, annot=True, cmap="Blues", fmt=".2f", ax=ax5)
                 st.pyplot(fig5)
 
-                st.subheader("Diagrama riesgo–retorno (Rendimiento vs Volatilidad)")
+                st.subheader("📈 Diagrama riesgo–retorno (Rendimiento vs Volatilidad)")
                 fig6, ax6 = plt.subplots(figsize=(7,5))
                 ax6.scatter(std_devs * 100, avg_returns * 100, s=120, color="#0078D7")
                 for i, ticker in enumerate(tickers):
@@ -258,5 +247,3 @@ elif opcion == "Análisis comparativo":
 # ==========================================
 st.markdown("---")
 st.markdown("<p style='text-align:center; color:gray;'>© 2025 FinSight | Desarrollado por Angie, Jhony y Dayana</p>", unsafe_allow_html=True)
-
-
